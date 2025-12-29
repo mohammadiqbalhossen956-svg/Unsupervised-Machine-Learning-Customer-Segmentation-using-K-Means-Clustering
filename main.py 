@@ -1,0 +1,45 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# 1. Creating a Synthetic Customer Dataset
+data = {
+    'Annual_Income_K$': [15, 16, 17, 18, 19, 20, 50, 55, 60, 62, 65, 70, 100, 110, 120, 125, 130, 140],
+    'Spending_Score_1_100': [39, 81, 6, 77, 40, 76, 45, 50, 48, 55, 60, 42, 10, 20, 5, 15, 30, 8]
+}
+
+df = pd.DataFrame(data)
+
+# 2. Preprocessing: Scaling the data for better clustering
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(df)
+
+# 3. Applying K-Means Clustering (Targeting 3 Distinct Groups)
+kmeans = KMeans(n_clusters=3, init='k-means++', random_state=42)
+df['Cluster'] = kmeans.fit_transform(scaled_data).argmax(axis=1)
+
+# 4. Visualization
+plt.figure(figsize=(8, 6))
+colors = ['red', 'blue', 'green']
+labels = ['Budget-Conscious', 'Target Customers', 'High-Income Low-Spenders']
+
+for i in range(3):
+    cluster_set = df[df['Cluster'] == i]
+    plt.scatter(cluster_set['Annual_Income_K$'], cluster_set['Spending_Score_1_100'], 
+                s=100, c=colors[i], label=labels[i])
+
+# Plotting Centroids
+plt.scatter(kmeans.cluster_centers_[:, 0] * df['Annual_Income_K$'].std() + df['Annual_Income_K$'].mean(), 
+            kmeans.cluster_centers_[:, 1] * df['Spending_Score_1_100'].std() + df['Spending_Score_1_100'].mean(), 
+            s=200, c='black', marker='X', label='Centroids')
+
+plt.title('Customer Segmentation using K-Means')
+plt.xlabel('Annual Income (K$)')
+plt.ylabel('Spending Score (1-100)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.savefig('customer_clusters.png')
+plt.show()
+
+print("Clustering Complete. Clusters identified and saved as customer_clusters.png")
